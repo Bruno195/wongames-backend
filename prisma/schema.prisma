@@ -1,0 +1,139 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id        Int              @id @default(autoincrement())
+  name      String           @db.VarChar(255)
+  slug      String           @unique
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  games     GameToCategory[]
+
+  @@map("categories")
+}
+
+model Platform {
+  id             Int              @id @default(autoincrement())
+  name           String           @unique @db.VarChar(255)
+  slug           String           @unique
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  GameToPlatform GameToPlatform[]
+
+  @@map("platforms")
+}
+
+model Developer {
+  id              Int               @id @default(autoincrement())
+  name            String            @unique @db.VarChar(255)
+  slug            String            @unique
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  GameToDeveloper GameToDeveloper[]
+
+  @@map("developers")
+}
+
+model Publisher {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique @db.VarChar(255)
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  games     Game[]
+
+  @@map("publishers")
+}
+
+model Game {
+  id                Int               @id @default(autoincrement())
+  name              String
+  slug              String            @unique
+  short_description String
+  description       String
+  price             Float             @default(0)
+  release_date      DateTime?
+  cover             String?
+  gallery           String[]
+  rating            Rating            @default(FREE)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  categories        GameToCategory[]
+  GameToDeveloper   GameToDeveloper[]
+  GameToPlatform    GameToPlatform[]
+  publisher         Publisher         @relation(fields: [publisherId], references: [id])
+  publisherId       Int
+
+  @@map("games")
+}
+
+model GameToDeveloper {
+  id          Int       @id @default(autoincrement())
+  game        Game      @relation(fields: [gameId], references: [id])
+  gameId      Int       @map("game_id") // relation scalar field (used in the `@relation` attribute above)
+  developer   Developer @relation(fields: [developerId], references: [id])
+  developerId Int       @map("developer_id") // relation scalar field (used in the `@relation` attribute above)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@map("games_to_developers")
+}
+
+model GameToCategory {
+  id         Int      @id @default(autoincrement())
+  game       Game     @relation(fields: [gameId], references: [id])
+  gameId     Int      @map("game_id") // relation scalar field (used in the `@relation` attribute above)
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId Int      @map("category_id") // relation scalar field (used in the `@relation` attribute above)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("games_to_categories")
+}
+
+model GameToPlatform {
+  id         Int      @id @default(autoincrement())
+  game       Game     @relation(fields: [gameId], references: [id])
+  gameId     Int      @map("game_id") // relation scalar field (used in the `@relation` attribute above)
+  platform   Platform @relation(fields: [platformId], references: [id])
+  platformId Int      @map("platform_id") // relation scalar field (used in the `@relation` attribute above)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("games_to_platforms")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique @db.VarChar(255)
+  email     String   @unique @db.VarChar(255)
+  role      Role     @default(USER)
+  password  String   @db.VarChar(255) // Você deve armazenar senhas com segurança usando técnicas de hash e salt.
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Rating {
+  FREE
+  PEGI3
+  PEGI7
+  PEGI12
+  PEGI16
+  PEGI18
+}
